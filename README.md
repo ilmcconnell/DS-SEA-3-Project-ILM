@@ -5,7 +5,7 @@ US govt expenditure on healthcare is set to reach 20 % of GDP by 2025. There are
 
 
 ##What Is The Question You Hope To Answer?
-Can we predict the payment from Centers to Medicare and Medicaid (CMS) for a county in 2015 based on service type, county demographics and payment data from 2011-2014?
+Can we predict the payments from Centers for Medicare and Medicaid (CMS) in 2015 based on demographics and payment data from 2011-2014?
 
 ##Corollary Questions
 
