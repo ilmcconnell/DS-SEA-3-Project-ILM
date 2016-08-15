@@ -1,0 +1,5 @@
+variables used pulling from decennial API: (file)
+
+HUDUSER zip to county cross walk from Q2 2016:
+https://www.huduser.gov/portal/datasets/usps_crosswalk.html
+
