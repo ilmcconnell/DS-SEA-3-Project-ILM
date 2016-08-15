@@ -24,7 +24,7 @@ paymentData = rawPaymentData[['Provider_Zip_Code','Total']].groupby(by='Provider
 
 #CREATE CENSUSDATA DATAFRAME
 path = '/Users/Iain/DS-SEA-3/DS-SEA-3-Project-ILM/data/census/'
-filename = 'census-data-by-county-2016.07.31-09.48PM.csv'
+filename = 'census-data-by-county-2016.08.15-03.48AM.csv'
 censusData = pd.read_csv(path + filename, converters={'state_fips':lambda x: str(x), 'county_fips':lambda x: str(x)})
 
 #CREATE FIPS CODE IN CENSUSDATA DATAFRAME
@@ -44,10 +44,10 @@ censusZipPayment = pd.merge(censusZip, paymentData, on='ZIP', how = 'left')
 
 print censusZipPayment.head(50)
 
-zipCountyCrosswalk.info #52314 ZIPS
+print zipCountyCrosswalk.shape #52314 ZIPS
 
-paymentData.info #2806 unique ZIPs
+print paymentData.shape #2806 unique ZIPs
 
-censusData.info #10 rows only.
+print censusData.shape #3143 rows
 
-censusZipPayment.info
+print censusZipPayment.shape #52033 rows
