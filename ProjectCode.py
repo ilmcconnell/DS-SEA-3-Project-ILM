@@ -45,15 +45,11 @@ censusZip = pd.merge(censusData, zipCountyCrosswalk, on='FIPS', how='left')
 #MEREGE THE CENSUSZIP DATAFRAME AND THE CMS PAYMENT DATA DATAFRAME
 censusZipPayment = pd.merge(censusZip, paymentData, on='ZIP', how = 'left')
 
-print censusZipPayment.head(50)
-
-print zipCountyCrosswalk.shape #52314 ZIPS
-
-print paymentData.shape #2806 unique ZIPs
-
-print censusData.shape #3143 rows
-
-print censusZipPayment.shape #52033 rows
+print 'censusZippayment head: ', censusZipPayment.head(50)
+print 'zipCountyCrossWalk.shape: ', zipCountyCrosswalk.shape #52314 ZIPS
+print 'paymentData.shape: ', paymentData.shape  #2806 unique ZIPs
+print 'censusData.shape: ', censusData.shape #3143 rows
+print 'censusZipPayment.shape: ', censusZipPayment.shape #52033 rows
 
 #ELIMINATE COLUMNS THAT ARE JUST NaN
 del censusZipPayment['Unnamed: 4']
@@ -64,8 +60,7 @@ del censusZipPayment['Rural !! Inside urban clusters_2010']
 
 #DROP ALL ROWS CONTAINING NaN
 censusZipPaymentNoNan = pd.DataFrame(censusZipPayment.dropna())
-
-censusZipPaymentNoNan.shape #3877 rwos left.
+print 'censusZipPaymentNoNan.shape: ', censusZipPaymentNoNan.shape #3877 rwos left.
 
 #still need to multiple though county/zip splits
 censusZipPaymentNoNan.columns.values
@@ -112,6 +107,8 @@ nonNumericColList = ['state', 'county', 'state_fips', 'county_fips','FIPS', 'ZIP
 #censusZipPaymentNoNan[collist] = censusZipPaymentNoNan[collist].apply(pd.to_numeric)
 numericChunk = censusZipPaymentNoNan[collist].apply(lambda x: pd.to_numeric(x, errors='coerce'))
 nonNumericChunk = censusZipPaymentNoNan[nonNumericColList]
+#still nulls present here 8/20 21:38!
+
 
 #join the chuncks back to gether on their indexes
 frames  = [nonNumericChunk,numericChunk]
@@ -242,23 +239,42 @@ featurelist = ['Total Population_2010','White alone_2010',
 'Some Other Race alone_2010', 'Two or More Races_2010',
 'Not Hispanic or Latino_2010', 'Hispanic or Latino_2010', 'Male:_2010']
 
-rowsWithNulls = pd.isnull(numericCensusZipPaymentNoNan)
+#check specified features from dataframe for non numeric values
+# ~ is negation (ie. return where False)
+#numericCensusZipPaymentNoNan[featurelist][~numericCensusZipPaymentNoNan[featurelist].applymap(np.isreal).all(1)]
 
-rowsWithNulls.head(5)
+#numericCensusZipPaymentNoNan.loc[181] #WHY IS THIS ROW STILL HERE?!
+numericCensusZipPaymentNoNanAgain = pd.DataFrame(numericCensusZipPaymentNoNan.dropna()) #WHY DId I NEED  TO DO THIS?!
 
-np.any(np.isnan(numericCensusZipPaymentNoNan[featurelist]))
+print numericCensusZipPaymentNoNanAgain.shape
+print numericCensusZipPaymentNoNan.shape
 
-np.all(np.isfinite(numericCensusZipPaymentNoNan[featurelist]))
+
+
+#np.any(np.isnan(numericCensusZipPaymentNoNan[featurelist])) #returns True = bad
+#np.all(np.isfinite(numericCensusZipPaymentNoNan[featurelist])) #returns False = bad
+
+np.any(np.isnan(numericCensusZipPaymentNoNanAgain[featurelist])) #returns True = bad
+np.all(np.isfinite(numericCensusZipPaymentNoNanAgain[featurelist])) #returns False = bad
+
 
 from sklearn.cross_validation import cross_val_score
 from sklearn.linear_model import LinearRegression
-y = numericCensusZipPaymentNoNan['adjTotal']
-X = numericCensusZipPaymentNoNan[featurelist]
+y = numericCensusZipPaymentNoNanAgain['adjTotal']
+X = numericCensusZipPaymentNoNanAgain[featurelist]
 
 
 linreg = LinearRegression()
 msescores = cross_val_score(linreg,X,y,cv=10,scoring='mean_squared_error')
-rmsescores = np.mean(np.sqrt(-msescores))
+linregrmsescores = np.mean(np.sqrt(-msescores))
 
-print 'linreg rmsescores: ', rmsescores
-print 'nullPredictionRMSE: ', nullPredictionRMSE
+
+from sklearn.tree import DecisionTreeRegressor
+treereg = DecisionTreeRegressor()
+msescores = cross_val_score(treereg,X,y,cv=10,scoring='mean_squared_error')
+treeregrmsescores = np.mean(np.sqrt(-msescores))
+
+
+print 'treereg rmsescores:', treeregrmsescores #worse than guessing
+print 'linreg rmsescores: ', linregrmsescores #only sligthly better than guessing 
+print 'nullPredictionRMSE: ', nullPredictionRMSE #the guessing value.
