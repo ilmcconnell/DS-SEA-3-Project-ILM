@@ -225,6 +225,21 @@ fig.savefig('/Users/Iain/DS-SEA-3/DS-SEA-3-Project-ILM/viz/correlationHeatMap.pn
 #let's test it.
 
 
+
+#check specified features from dataframe for non numeric values
+# ~ is negation (ie. return where False)
+#numericCensusZipPaymentNoNan[featurelist][~numericCensusZipPaymentNoNan[featurelist].applymap(np.isreal).all(1)]
+
+#numericCensusZipPaymentNoNan.loc[181] #WHY IS THIS ROW STILL HERE?!
+numericCensusZipPaymentNoNanAgain = pd.DataFrame(numericCensusZipPaymentNoNan.dropna()) #WHY DId I NEED  TO DO THIS again?!
+
+print numericCensusZipPaymentNoNanAgain.shape
+print numericCensusZipPaymentNoNan.shape
+
+#np.any(np.isnan(numericCensusZipPaymentNoNan[featurelist])) #returns True = bad
+#np.all(np.isfinite(numericCensusZipPaymentNoNan[featurelist])) #returns False = bad
+
+
 #what is the rmse we'd expect by random quessing?
 from sklearn import metrics
 numericCensusZipPaymentNoNan['nullPrediction']=numericCensusZipPaymentNoNan.adjTotal.mean()
@@ -238,25 +253,6 @@ featurelist = ['Total Population_2010','White alone_2010',
 'Native Hawaiian and Other Pacific Islander alone_2010',
 'Some Other Race alone_2010', 'Two or More Races_2010',
 'Not Hispanic or Latino_2010', 'Hispanic or Latino_2010', 'Male:_2010']
-
-#check specified features from dataframe for non numeric values
-# ~ is negation (ie. return where False)
-#numericCensusZipPaymentNoNan[featurelist][~numericCensusZipPaymentNoNan[featurelist].applymap(np.isreal).all(1)]
-
-#numericCensusZipPaymentNoNan.loc[181] #WHY IS THIS ROW STILL HERE?!
-numericCensusZipPaymentNoNanAgain = pd.DataFrame(numericCensusZipPaymentNoNan.dropna()) #WHY DId I NEED  TO DO THIS?!
-
-print numericCensusZipPaymentNoNanAgain.shape
-print numericCensusZipPaymentNoNan.shape
-
-
-
-#np.any(np.isnan(numericCensusZipPaymentNoNan[featurelist])) #returns True = bad
-#np.all(np.isfinite(numericCensusZipPaymentNoNan[featurelist])) #returns False = bad
-
-np.any(np.isnan(numericCensusZipPaymentNoNanAgain[featurelist])) #returns True = bad
-np.all(np.isfinite(numericCensusZipPaymentNoNanAgain[featurelist])) #returns False = bad
-
 
 from sklearn.cross_validation import cross_val_score
 from sklearn.linear_model import LinearRegression
@@ -277,4 +273,58 @@ treeregrmsescores = np.mean(np.sqrt(-msescores))
 
 print 'treereg rmsescores:', treeregrmsescores #worse than guessing
 print 'linreg rmsescores: ', linregrmsescores #only sligthly better than guessing 
-print 'nullPredictionRMSE: ', nullPredictionRMSE #the guessing value.
+print 'nullPredictionRMSE: ', nullPredictionRMSE #the guessing value. 
+
+#with all 75 numeric features
+#treereg rmsescores: 2808196.86155
+#linreg rmsescores:  2557658.1639
+#nullPredictionRMSE:  2467141.95052
+#
+#WITH LIMITED FEATURESTE BELOW
+#
+#treereg rmsescores: 2672559.24825
+#linreg rmsescores:  2357258.65512
+#nullPredictionRMSE:  2467141.95052
+#
+#seems that the model is not very predictive usng these features.
+#featurelist = ['Total Population_2010','White alone_2010',
+#'Black or African American alone_2010',
+#'American Indian and Alaska Native alone_2010', 'Asian alone_2010',
+#'Native Hawaiian and Other Pacific Islander alone_2010',
+#'Some Other Race alone_2010', 'Two or More Races_2010',
+#'Not Hispanic or Latino_2010', 'Hispanic or Latino_2010', 'Male:_2010']
+
+#attempt some feature engineering - go in a different dirrection from census data
+
+paymentStates = pd.get_dummies(numericCensusZipPaymentNoNanAgain.state, prefix='state')
+paymentStates.drop(paymentStates.columns[0], axis=1, inplace=True)
+
+# concatenate the original DataFrame and the dummy DataFrame
+numericCensusZipPaymentNoNanAgainStates = pd.concat([numericCensusZipPaymentNoNanAgain, paymentStates], axis=1)
+
+#set the features to be just the states - i.e. where a zip code is in at state
+featurelist = paymentStates.columns.values
+
+#set up x and y
+y = numericCensusZipPaymentNoNanAgainStates['adjTotal']
+X = numericCensusZipPaymentNoNanAgainStates[featurelist]
+
+#set up a linear regresiion estimateor and run cross validation to return rmse
+linreg = LinearRegression()
+msescores = cross_val_score(linreg,X,y,cv=10,scoring='mean_squared_error')
+linregrmsescores = np.mean(np.sqrt(-msescores))
+
+#set up a decision tree estimateor and run cross validation to return rmse
+treereg = DecisionTreeRegressor()
+msescores = cross_val_score(treereg,X,y,cv=10,scoring='mean_squared_error')
+treeregrmsescores = np.mean(np.sqrt(-msescores))
+
+#print results
+print 'treereg rmsescores:', treeregrmsescores #only sligthly better than guessing 
+print 'linreg rmsescores: ', linregrmsescores #wayway worse than guessing
+print 'nullPredictionRMSE: ', nullPredictionRMSE #the guessing value. 
+
+#treereg rmsescores: 2431290.31101
+#linreg rmsescores:  1.04428502032e+19
+#nullPredictionRMSE:  2467141.95052
+
