@@ -185,16 +185,47 @@ correlationcheckcollist=['2-person household H13. Household Size [8]_2010',
 'Female: !! 70 to 74 years_2010', 'Female: !! 75 to 79 years_2010',
 'Female: !! 80 to 84 years_2010','adjTotal']
 
+testcorrelationcheckcollist=['White alone_2010',
+'Black or African American alone_2010',
+'American Indian and Alaska Native alone_2010', 'Asian alone_2010',
+'Native Hawaiian and Other Pacific Islander alone_2010',
+'Some Other Race alone_2010', 'Two or More Races_2010',
+'Not Hispanic or Latino_2010', 'Hispanic or Latino_2010',
+'Male: !! 65 and 66 years_2010', 'Male: !! 67 to 69 years_2010',
+'Male: !! 70 to 74 years_2010', 'Male: !! 75 to 79 years_2010',
+'Male: !! 80 to 84 years_2010', 'Male: !! 85 years and over_2010',
+'Female: !! 85 years and over_2010', 'Female: !! Under 5 years_2010',
+'Female: !! 65 and 66 years_2010', 'Female: !! 67 to 69 years_2010',
+'Female: !! 70 to 74 years_2010', 'Female: !! 75 to 79 years_2010',
+'Female: !! 80 to 84 years_2010','adjTotal']
+
 smalllist = ['adjTotal', 'Total Population_2010']
+numericCensusZipPaymentNoNan.head(5)
 
-pd.scatter_matrix(numericCensusZipPaymentNoNan[smalllist])
-
-pd.scatter_matrix(numericCensusZipPaymentNoNan[correlationcheckcollist])
+#pd.scatter_matrix(numericCensusZipPaymentNoNan[smalllist])
+#pd.scatter_matrix(numericCensusZipPaymentNoNan[correlationcheckcollist])
 
 sns.set(style="white")
 
 # Compute the correlation matrix
 #corr = numericChunk[correlationcheckcollist].corr()
+
+testcorr = numericCensusZipPaymentNoNan[testcorrelationcheckcollist].corr()
+
+# Set up the matplotlib figure
+f, ax = plt.subplots(figsize=(11, 9))
+
+# Generate a custom diverging colormap
+cmap = sns.diverging_palette(220, 10, as_cmap=True)
+#cmap = sns.cubehelix_palette(8, start=.5, rot=-.75, as_cmap=True)
+# Draw the heatmap with the mask and correct aspect ratio
+sns_plot = sns.heatmap(testcorr,  vmax=1,
+           square=True, 
+          linewidths=.6, cbar_kws={"shrink": .5}, ax=ax)
+
+
+
+
 
 corr = numericCensusZipPaymentNoNan[correlationcheckcollist].corr()
 
@@ -215,6 +246,10 @@ sns_plot = sns.heatmap(corr, mask=mask, cmap=cmap, vmax=.3,
 fig = sns_plot.get_figure()
 fig.savefig('/Users/Iain/DS-SEA-3/DS-SEA-3-Project-ILM/viz/correlationHeatMap.png')
 
+#try diferent heat mpa code to check for bugs
+#try smarllt number of featyres in ccorelation heaptmap
+#try PCA
+#try random forest
          
 #PLOT WITH DEFAULT COLOUR MAP (BLEUGH!)       
 #sns.heatmap(corr, mask=mask, vmax=.3,
@@ -328,3 +363,35 @@ print 'nullPredictionRMSE: ', nullPredictionRMSE #the guessing value.
 #linreg rmsescores:  1.04428502032e+19
 #nullPredictionRMSE:  2467141.95052
 
+#OK JUST TRY RANDOME FOREST
+
+feature_cols=['White alone_2010',
+'Black or African American alone_2010',
+'American Indian and Alaska Native alone_2010', 'Asian alone_2010',
+'Native Hawaiian and Other Pacific Islander alone_2010',
+'Some Other Race alone_2010', 'Two or More Races_2010',
+'Not Hispanic or Latino_2010', 'Hispanic or Latino_2010',
+'Male: !! 65 and 66 years_2010', 'Male: !! 67 to 69 years_2010',
+'Male: !! 70 to 74 years_2010', 'Male: !! 75 to 79 years_2010',
+'Male: !! 80 to 84 years_2010', 'Male: !! 85 years and over_2010',
+'Female: !! 85 years and over_2010', 'Female: !! Under 5 years_2010',
+'Female: !! 65 and 66 years_2010', 'Female: !! 67 to 69 years_2010',
+'Female: !! 70 to 74 years_2010', 'Female: !! 75 to 79 years_2010',
+'Female: !! 80 to 84 years_2010']
+
+#set up x and y
+y = numericCensusZipPaymentNoNanAgainStates['adjTotal']
+X = numericCensusZipPaymentNoNanAgainStates[feature_cols]
+
+from sklearn.ensemble import RandomForestRegressor
+rfreg = RandomForestRegressor()
+rfreg
+
+from sklearn.cross_validation import cross_val_score
+
+MSE_scores = cross_val_score(rfreg, X, y, cv=10, scoring='mean_squared_error')
+RMSE_scores = np.mean(np.sqrt(-MSE_scores))
+print 'random forest RMSE_scores: ', RMSE_scores
+
+rfreg.fit(X,y)
+pd.DataFrame({'feature':feature_cols, 'importance':rfreg.feature_importances_}).sort_values('importance', ascending=False)
