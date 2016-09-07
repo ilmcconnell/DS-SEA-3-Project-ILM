@@ -1,0 +1,12 @@
+interesting ot try and get rid of features being correlated with each other
+try PCA (dim reduction)
+feature creation
+could try other things maybe age distribution, % above a certain ages
+average,median
+e.g. above or below weighted average age
+
+just keep going here - this is OK work for the class.
+
+add data at zip code levle too perhaps
+population
+bring in inpaitent healthcare pricing as well.
