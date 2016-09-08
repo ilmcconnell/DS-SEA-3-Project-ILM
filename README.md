@@ -1,4 +1,4 @@
-#Project Question
+#Initial Project Question
 
 ## Predicting Government Health Spending
 US govt expenditure on healthcare is set to reach 20 % of GDP by 2025. There are many contributing factors, but is there some way to target efforts to reduce spending?<sup>1</sup>
